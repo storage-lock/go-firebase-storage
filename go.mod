@@ -3,14 +3,14 @@ module github.com/storage-lock/go-firebase-storage
 go 1.23
 
 require (
-	github.com/storage-lock/go-storage v0.0.3
+	github.com/golang-infrastructure/go-iterator v0.0.0-20230524171120-56988a9b127c
+	github.com/storage-lock/go-storage v0.1.0
 	github.com/storage-lock/go-storage-lock v0.0.7
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-infrastructure/go-goroutine-id v0.0.0-20230917075314-f1af231c0b06 // indirect
-	github.com/golang-infrastructure/go-iterator v0.0.0-20230524171120-56988a9b127c // indirect
 	github.com/golang-infrastructure/go-pointer v0.0.5 // indirect
 	github.com/golang-infrastructure/go-reflect-utils v0.0.0-20221130143747-965ef2eb09c3 // indirect
 	github.com/google/uuid v1.6.0 // indirect

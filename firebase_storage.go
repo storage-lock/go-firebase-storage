@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang-infrastructure/go-iterator"
 	"github.com/storage-lock/go-storage"
 	storage_lock "github.com/storage-lock/go-storage-lock"
 )
@@ -90,6 +91,12 @@ func (s *FirebaseStorage) Capabilities() []storage.StorageCapability {
 		storage.CapabilityReliableTime,
 		storage.CapabilityAtomicDelete,
 	}
+}
+
+func (s *FirebaseStorage) CreateWithVersion(ctx context.Context, lockId string, version storage.Version, lockInformation *storage.LockInformation) error {
+	// Firebase 不支持 CreateWithVersion，使用 Set 代替
+	lockInformation.Version = version
+	return s.Set(ctx, lockId, lockInformation)
 }
 
 func (s *FirebaseStorage) Init(ctx context.Context) error {
@@ -253,32 +260,16 @@ func (s *FirebaseStorage) Delete(ctx context.Context, lockId string) error {
 	return nil
 }
 
-func (s *FirebaseStorage) List(ctx context.Context) storage.StorageIterator {
+func (s *FirebaseStorage) List(ctx context.Context) (iterator.Iterator[*storage.LockInformation], error) {
 	// Firebase REST API 不支持直接列出所有键
 	// 这里返回一个空迭代器
-	return &firebaseIterator{}
+	return &firebaseIterator{}, nil
 }
 
 func (s *FirebaseStorage) Watch(ctx context.Context, lockId string) (<-chan *storage.LockInformation, error) {
 	// Firebase REST API 支持通过 SSE 监听变化
-	url := s.buildURL(lockId)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// 添加监听参数
-	q := req.URL.Query()
-	q.Add("shallow", "true")
-	req.URL.RawQuery = q.Encode()
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: 实现 SSE 监听
 	// 这里先返回一个简单的轮询监听
+	// TODO: 实现 SSE 监听以提高实时性
 	return storage.NewPollingLockWatcher(s, 1*time.Second).Watch(ctx, lockId)
 }
 
@@ -287,13 +278,18 @@ func (s *FirebaseStorage) Close(ctx context.Context) error {
 	return nil
 }
 
+func (s *FirebaseStorage) GetTime(ctx context.Context) (time.Time, error) {
+	// Firebase 不提供服务器时间，使用本地时间
+	return time.Now(), nil
+}
+
 // buildURL 构建 Firebase REST API URL
 // 格式: https://database-url.firebaseio.com/tenant-id/lock-id.json
 func (s *FirebaseStorage) buildURL(lockId string) string {
 	return s.databaseURL + s.tenantID + "/" + lockId + ".json"
 }
 
-// firebaseIterator 实现 StorageIterator
+// firebaseIterator 实现 Iterator
 type firebaseIterator struct {
 	current int
 }
