@@ -1,6 +1,11 @@
 # go-firebase-storage
 
-Firebase Realtime Database storage implementation for go-storage-lock.
+Firebase Realtime Database storage implementation.
+
+> **状态：不可用于分布式锁。** 这个实现可以存取 `LockInformation`，
+> 但它不声明 `CapabilityCAS` 与 `CapabilityReliableTime`，`NewStorageLock`
+> 会拒绝在它上面创建锁。需要 Firebase 上跑锁时，应改用 Firebase 的
+> 事务 API 或专门的强一致后端。
 
 ## Features
 
@@ -8,7 +13,8 @@ Firebase Realtime Database storage implementation for go-storage-lock.
 - ✅ No authentication required (public rules)
 - ✅ Multi-tenant isolation via tenant ID
 - ✅ REST API integration
-- ✅ CAS support via conditional updates
+- ⚠️ **不能用作分布式锁后端**：REST API 未使用 ETag/If-Match，UpdateWithVersion 是
+  先 GET 再 PUT，不满足线性一致 CAS；GetTime 返回本机时间，不是服务端时钟
 
 ## Usage
 

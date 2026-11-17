@@ -83,12 +83,16 @@ func (s *FirebaseStorage) GetName() string {
 	return "firebase-storage"
 }
 
+// Capabilities 如实声明这个实现能提供什么。
+//
+// Firebase Realtime Database 的 REST API 在这里没有用上 ETag/If-Match 条件 PUT，
+// UpdateWithVersion 是"先 GET 再 PUT"，中间存在竞态窗口，因此 **不声明 CapabilityCAS**。
+// GetTime 返回的是本机时间，不是可信的跨节点服务端时钟，因此 **不声明 CapabilityReliableTime**。
+//
+// 结果是 NewStorageLock 会拒绝在它上面创建锁，这正是期望行为：宁可不可用，
+// 也不要拿一个会误判互斥的存储去承载分布式锁。
 func (s *FirebaseStorage) Capabilities() []storage.StorageCapability {
-	// Firebase Realtime Database 通过条件更新支持 CAS
-	// 使用服务器时间作为时间源
 	return []storage.StorageCapability{
-		storage.CapabilityCAS,
-		storage.CapabilityReliableTime,
 		storage.CapabilityAtomicDelete,
 	}
 }
